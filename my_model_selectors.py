@@ -93,9 +93,13 @@ class SelectorBIC(ModelSelector):
         best_model = None
 
         for i in range(self.min_n_components, self.max_n_components + 1):
-            model, score = self.train_model(i)
-            if score < best_score:
-                best_model = model
+            try:
+                model, score = self.train_model(i)
+                if score < best_score:
+                    best_model = model
+                    best_score = score
+            except ValueError:
+                pass
 
         return best_model
 
@@ -121,8 +125,34 @@ class SelectorCV(ModelSelector):
 
     '''
 
+    def train_model(self, n_components):
+        """
+        Use KFlod and calculate the average log Likelihood in order to find the best value for n_components
+        """
+        scores = []
+
+        split_method = KFold(n_splits=min(3, len(self.lengths)))
+        for cv_train_idx, cv_test_idx in split_method.split(self.sequences):
+            samples, features = combine_sequences(cv_train_idx, self.sequences)
+            model = GaussianHMM(n_components=n_components, covariance_type="diag", n_iter=1000, \
+                random_state=self.random_state, verbose=False).fit(samples, features)
+            scores.append(model.score(*combine_sequences(cv_test_idx, self.sequences)))
+
+        return self.base_model(n_components), np.mean(scores)
+
     def select(self):
         warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-        # TODO implement model selection using CV
-        raise NotImplementedError
+        best_score = float('-inf')
+        best_model = None
+
+        for i in range(self.min_n_components, self.max_n_components + 1):
+            try:
+                model, score = self.train_model(i)
+                if score > best_score:
+                    best_model = model
+                    best_score = score
+            except ValueError:
+                pass
+
+        return best_model
