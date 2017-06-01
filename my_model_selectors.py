@@ -98,7 +98,7 @@ class SelectorBIC(ModelSelector):
                 if score < best_score:
                     best_model = model
                     best_score = score
-            except ValueError:
+            except:
                 pass
 
         return best_model
@@ -131,7 +131,7 @@ class SelectorDIC(ModelSelector):
                 if score > best_score:
                     best_score = score
                     best_model = model
-            except ValueError:
+            except:
                 pass
 
         return best_model
@@ -169,7 +169,7 @@ class SelectorCV(ModelSelector):
                 if score > best_score:
                     best_model = model
                     best_score = score
-            except ValueError:
+            except:
                 pass
 
         return best_model

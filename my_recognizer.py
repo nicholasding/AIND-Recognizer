@@ -1,4 +1,6 @@
 import warnings
+import operator
+
 from asl_data import SinglesData
 
 
@@ -18,8 +20,20 @@ def recognize(models: dict, test_set: SinglesData):
            ['WORDGUESS0', 'WORDGUESS1', 'WORDGUESS2',...]
    """
     warnings.filterwarnings("ignore", category=DeprecationWarning)
-    probabilities = []
-    guesses = []
-    # TODO implement the recognizer
-    # return probabilities, guesses
-    raise NotImplementedError
+    probabilities = [{}] * test_set.num_items
+    guesses = [''] * test_set.num_items
+
+    for word_id, (features, lengths) in test_set.get_all_Xlengths().items():
+        prob = {}
+        for word, model in models.items():
+            try:
+                if model: # Sometimes, model could be None
+                    prob[word] = model.score(features, lengths)
+            except ValueError:
+                prob[word] = float('-inf')
+        best_guess = max(prob.items(), key=operator.itemgetter(1))
+        probabilities[word_id] = prob
+        guesses[word_id] = best_guess[0]
+
+    return probabilities, guesses
+
