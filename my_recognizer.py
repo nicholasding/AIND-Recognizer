@@ -29,6 +29,8 @@ def recognize(models: dict, test_set: SinglesData):
             try:
                 if model: # Sometimes, model could be None
                     prob[word] = model.score(features, lengths)
+                else:
+                    prob[word] = float('-inf')
             except ValueError:
                 prob[word] = float('-inf')
         best_guess = max(prob.items(), key=operator.itemgetter(1))
